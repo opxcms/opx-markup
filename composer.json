@@ -1,0 +1,33 @@
+{
+  "name": "opxcms/opx-markup",
+  "description": "OpxCMS markup parser module.",
+  "type": "library",
+  "keywords": [
+    "opxcms",
+    "markup",
+    "module"
+  ],
+  "license": "MIT",
+  "support": {
+    "issues": "https://github.com/opxcms/opx-markup/issues",
+    "source": "https://github.com/opxcms/opx-markup"
+  },
+  "authors": [
+    {
+      "name": "Lozovoy Vyacheslav",
+      "email": "opxcms@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.1.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Modules\\Opx\\MarkUp\\": "src/"
+    }
+  },
+  "minimum-stability": "dev"
+}
