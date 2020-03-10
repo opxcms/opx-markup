@@ -25,6 +25,7 @@ class OpxMarkUp
 
         $ul_opened = false;
         $table_opened = false;
+        $div_opened = 0;
 
         foreach ($arr as $key => $line) {
             $line = trim($line);
@@ -43,37 +44,33 @@ class OpxMarkUp
             }
 
             if (strpos($line, '###### ') === 0) {
+                // Headings
                 $new .= '<h6' . self::class($class, 'title') . '>' . mb_substr($line, 7) . "</h6>\r\n";
             } elseif (strpos($line, '##### ') === 0) {
+                // Headings
                 $new .= '<h5' . self::class($class, 'title') . '>' . mb_substr($line, 6) . "</h5>\r\n";
             } elseif (strpos($line, '#### ') === 0) {
+                // Headings
                 $new .= '<h4' . self::class($class, 'title') . '>' . mb_substr($line, 5) . "</h4>\r\n";
             } elseif (strpos($line, '### ') === 0) {
+                // Headings
                 $new .= '<h3' . self::class($class, 'title') . '>' . mb_substr($line, 4) . "</h3>\r\n";
             } elseif (strpos($line, '## ') === 0) {
+                // Headings
                 $new .= '<h2' . self::class($class, 'title') . '>' . mb_substr($line, 3) . "</h2>\r\n";
             } elseif (strpos($line, '# ') === 0) {
+                // Headings
                 $new .= '<h1' . self::class($class, 'title') . '>' . mb_substr($line, 2) . "</h1>\r\n";
             } elseif (strpos($line, '* ') === 0) {
+                // List
                 if (!$ul_opened) {
                     $new .= '<ul' . self::class($class, 'list') . '>' . "\r\n";
                     $ul_opened = true;
                 }
                 $li = mb_substr($line, 2);
-//                $split = explode(':', $li, 2);
-//                if (count($split) === 2) {
-//                    if (strpos($split[1], '|') !== false) {
-//                        $split[1] = implode(', ', explode('|', $split[1]));
-//                    }
-//                    if (strpos($split[1], '^') !== false) {
-//                        $split[1] = str_replace('^', ' x ', $split[1]);
-//                    }
-//                    $li = '<span' . self::class($class, 'list-item-key') . ">{$split[0]}:</span>";
-//                    $li .= ' ';
-//                    $li .= '<span' . self::class($class, 'list-item-value') . ">{$split[1]}</span>";
-//                }
                 $new .= '<li' . self::class($class, 'list-item') . '>' . $li . "</li>\r\n";
             } elseif (strpos($line, '|') === 0) {
+                // Table
                 if (!$table_opened) {
                     $new .= '<div' . self::class($class, 'table-container') . '>' . "\r\n";
                     $new .= '<table' . self::class($class, 'table') . '>' . "\r\n";
@@ -88,12 +85,34 @@ class OpxMarkUp
                     return null;
                 }, $line);
                 $new .= '</tr>' . "\r\n";
+            } elseif (strpos($line, '[') === 0) {
+                // open block
+                $suffixes = explode(' ', trim(substr($line, 1)));
+                $classes = null;
+                if (!empty($suffixes)) {
+                    foreach ($suffixes as $suffix) {
+                        $classes .= ' ' . self::class($class, 'block-' . $suffix, true);
+                    }
+                }
+                $new .= '<div' . self::class(null, $classes) . '>';
+                $div_opened++;
+            } elseif (strpos($line, ']') === 0) {
+                // cloce block
+                $new .= '</div>';
+                $div_opened--;
             } elseif (strpos($line, '---') === 0) {
-                $new .= '<hr>';
+                // Page break
+                $new .= '<hr' . self::class($class, 'break') . '>';
+            } elseif (strpos($line, '//') === 0) {
+                // Just commented string
+                $new .= '<!-- ' . trim(substr($line, 2)) . '-->';
             } elseif (strpos($line, '/') === 0) {
+                // Line as is
                 $new .= mb_substr($line, 1);
             } else {
+                // Paragraph
                 if (strpos($line, '\\') === 0) {
+                    // Force paragraph
                     $line = trim(mb_substr($line, 1));
                 }
                 $new .= '<p' . self::class($class, 'paragraph') . ">{$line}</p>\r\n";
@@ -109,6 +128,10 @@ class OpxMarkUp
             $new .= "</table>\r\n";
             $new .= "</div>\r\n";
         }
+        // Close all unclosed divs
+        if ($div_opened > 0) {
+            $new .= str_repeat("</div>\r\n", $div_opened);
+        }
         $new = self::replaceImages($new, $class);
         $new = self::replaceLinks($new, $class);
 
@@ -120,20 +143,29 @@ class OpxMarkUp
      *
      * @param string|null $class
      * @param string|null $suffix
+     * @param bool $raw
      *
      * @return  string|null
      */
-    protected static function class(?string $class = null, ?string $suffix = null): ?string
+    protected static function class(?string $class = null, ?string $suffix = null, bool $raw = false): ?string
     {
-        if ($class === null) {
+        if ($class === null && $suffix === null) {
             return null;
         }
+
+        $suffix = trim($suffix);
+
+        if ($class === null) {
+            return $raw === false ? " class=\"{$suffix}\"" : $suffix;
+        }
+
+        $class = trim($class);
 
         if ($suffix !== null) {
             $suffix = (strpos($class, '__') !== false ? '-' : '__') . $suffix;
         }
 
-        return " class=\"{$class}{$suffix}\"";
+        return $raw === false ? " class=\"{$class}{$suffix}\"" : $class . $suffix;
     }
 
     /**
@@ -150,7 +182,7 @@ class OpxMarkUp
             $options = explode('::', $matches[1] ?? '');
             $src = $options[0];
             $alt = $options[1] ?? $options[0];
-            $align = $options[2] !== null ? strtolower($options[2]) : null;
+            $align = isset($options[2]) ? strtolower($options[2]) : null;
 
             $styling = '';
 
@@ -164,7 +196,7 @@ class OpxMarkUp
             } else {
                 $divider = strpos($class, '__') === false ? '__' : '-';
                 $styling = " class=\"{$class}{$divider}img";
-                if ($align !== null && ($align === 'left' || $align === 'right' || $align === 'center')) {
+                if ($align !== null) {
                     $styling .= " {$class}{$divider}img-{$align}";
                 }
                 $styling .= '"';
