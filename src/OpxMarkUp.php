@@ -88,7 +88,7 @@ class OpxMarkUp
             } elseif (strpos($line, '[') === 0) {
                 // open block
                 $suffixes = explode(' ', trim(substr($line, 1)));
-                $classes = null;
+                $classes = self::class($class, 'block', true);
                 if (!empty($suffixes)) {
                     foreach ($suffixes as $suffix) {
                         $classes .= ' ' . self::class($class, 'block-' . $suffix, true);
@@ -97,7 +97,7 @@ class OpxMarkUp
                 $new .= '<div' . self::class(null, $classes) . '>';
                 $div_opened++;
             } elseif (strpos($line, ']') === 0) {
-                // cloce block
+                // close block
                 $new .= '</div>';
                 $div_opened--;
             } elseif (strpos($line, '---') === 0) {
