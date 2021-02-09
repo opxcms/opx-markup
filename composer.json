@@ -19,11 +19,8 @@
     }
   ],
   "require": {
-    "php": "^7.1.3",
+    "php": "^7.4",
     "ext-mbstring": "*"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^7.5"
   },
   "autoload": {
     "psr-4": {

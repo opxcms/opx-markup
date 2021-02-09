@@ -14,7 +14,7 @@ class OpxMarkUp
      *
      * @return  null|string
      */
-    public static function parse($content, $class = null): ?string
+    public static function parse(string $content, $class = null): ?string
     {
         if (!$content) {
             return null;
